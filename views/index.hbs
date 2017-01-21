@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Bootstrap 101 Template</title>
+
+    <!-- Bootstrap -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+<style type="text/css">
+    .container {
+        width: 100%;
+    }
+
+    #map {
+        min-height: 200px;
+    }
+</style>
+<body>
+<div class="container">
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                        data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">Brand</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav">
+                    <li><a href="#">Link</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+                           aria-expanded="false">Dropdown <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="#">Action</a></li>
+                            <li><a href="#">Another action</a></li>
+                            <li><a href="#">Something else here</a></li>
+                            <li role="separator" class="divider"></li>
+                            <li><a href="#">Separated link</a></li>
+                            <li role="separator" class="divider"></li>
+                            <li><a href="#">One more separated link</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="#">Link</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+                           aria-expanded="false">Dropdown <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="#">Action</a></li>
+                            <li><a href="#">Another action</a></li>
+                            <li><a href="#">Something else here</a></li>
+                            <li role="separator" class="divider"></li>
+                            <li><a href="#">Separated link</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div><!-- /.navbar-collapse -->
+        </div><!-- /.container-fluid -->
+    </nav>
+    <div style="position: relative;display: block;">
+        <div style="float: left; border: 1px solid; width: 60%">
+            <input type="text" id="autocomplete" class="form-control" placeholder="source" aria-describedby="source">
+            <div id="map"></div>
+        </div>
+        <div style="float: right; border: 1px solid; width: 40%">
+            <form>
+                <div class="input-group">
+                    <span class="input-group-addon" id="basic-addon1">src</span>
+                    <input type="text" class="form-control" id="src" placeholder="source" aria-describedby="source">
+                </div>
+                <div class="input-group">
+                    <span class="input-group-addon" id="basic-addon1">dest</span>
+                    <input type="text" class="form-control" id="dest" placeholder="destination"
+                           aria-describedby=" destination">
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+<script>
+    var map;
+    var marker;
+    function initMap() {
+        var geocoder = new google.maps.Geocoder;
+        var infowindow = new google.maps.InfoWindow();
+        var myLatlng = {lat: 23.173244, lng: 72.813143};
+        map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 4,
+            center: myLatlng
+        });
+        marker = new google.maps.Marker({
+            position: myLatlng,
+            map: map,
+            title: 'Click to zoom'
+        });
+        var input = document.getElementById('autocomplete');
+        var src = document.getElementById('src');
+        var dest = document.getElementById('dest');
+        autocomplete_searchbox = new google.maps.places.Autocomplete(input);
+        autocomplete_src = new google.maps.places.Autocomplete(src);
+        autocomplete_dest = new google.maps.places.Autocomplete(dest);
+        google.maps.event.addListener(autocomplete_searchbox, 'place_changed', function () {
+            getChangePlace(autocomplete_searchbox, input);
+        });
+        google.maps.event.addListener(autocomplete_src, 'place_changed', function () {
+            getChangePlace(autocomplete_src, src);
+        });
+        google.maps.event.addListener(autocomplete_dest, 'place_changed', function () {
+            getChangePlace(autocomplete_dest, dest);
+        });
+        function getChangePlace(autocomplete, input) {
+            var place = autocomplete.getPlace();
+            console.log(place.name);
+            if (!place.geometry) {
+                return;
+            }
+            if (place.geometry.viewport) {
+                map.fitBounds(place.geometry.viewport);
+            } else {
+                map.setCenter(place.geometry.location);
+                map.setZoom(17);
+            }
+            marker.setPlace(({
+                placeId: place.place_id,
+                location: place.geometry.location
+            }));
+            var data_lat = document.createAttribute('data-lat');
+            var data_lng = document.createAttribute('data-lng');
+            var data_placeId = document.createAttribute('data-placeId');
+            var data_placename = document.createAttribute('data-placename');
+            data_lat.value = place.geometry.location.lat();
+            data_lng.value = place.geometry.location.lng();
+            data_placeId.value = place.place_id;
+            data_placename.value = place.name;
+            input.setAttributeNode(data_lat);
+            input.setAttributeNode(data_lng);
+            input.setAttributeNode(data_placeId);
+            input.setAttributeNode(data_placename);
+        }
+        function geocodeLatLng(geocoder,lat, lng, map, infowindow) {
+            var latlng = {lat: parseFloat(lat), lng: parseFloat(lng)};
+            geocoder.geocode({'location': latlng}, function(results, status) {
+                if (status === 'OK') {
+                    if (results[1]) {
+                        var marker = new google.maps.Marker({
+                            position: latlng,
+                            map: map
+                        });
+                        console.log("hello");
+                        infowindow.setContent(results[1].formatted_address);
+                        infowindow.open(map, marker);
+                        marker.setMap(null);
+                    } else {
+                        window.alert('No results found');
+                    }
+                } else {
+                    window.alert('Geocoder failed due to: ' + status);
+                }
+            });
+        }
+        map.addListener('dblclick', function (e) {
+            console.log(e.latLng.lng());
+            geocodeLatLng(geocoder, e.latLng.lat(), e.latLng.lng(), map, infowindow);
+        });
+        var cityCircle = new google.maps.Circle({
+            strokeColor: '#FF0000',
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: '#FF0000',
+            fillOpacity: 0.35,
+            map: map,
+            center: myLatlng,
+            radius: 20000
+        });
+        $.get('/api/drivers', function (data) {
+            var res =  JSON.parse(data);
+            console.log(res.length);
+            for(var i=0; i<10;i++){
+                console.log("hello world");
+                var res_o = JSON.parse(res[i]);
+                var coord = {lat: res_o.snappedPoints[0].location.latitude, lng:res_o.snappedPoints[0].location.longitude};
+                var marker = new google.maps.Marker({
+                    position: coord,
+                    map: map
+                })
+            }
+        })
+    }
+</script>
+<script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyASz6Gqa5Oa3WialPx7Z6ebZTj02Liw-Gk&callback=initMap&libraries=places">
+</script>
+
+</body>
+</html>
