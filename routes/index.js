@@ -12,9 +12,23 @@ router.get('/', function(req, res, next) {
 });
 
 router.get('/api/drivers', function (req, res, next) {
+    generate(function (data) {
+        res.send(JSON.stringify(data));
+    });
+});
+router.get('/api/region', function (req, res, next) {
+    var angle = 2*Math.PI*0.25;
+    var lat = 20*Math.cos(angle)*0.00904470708 + 23.173244;
+    var lng = 20*Math.sin(angle)*0.00959214211 + 72.813143;
+    res.send(JSON.stringify({lat:lat, lng:lng}))
+});
+
+
+function generate(callback) {
     var queue;
     var drivers_loc = [] ;
     var drivers = [];
+    var drivers_data = [];
     function generateRandom() {
         var dist = Math.floor(Math.random()*20);
         var angle  = Math.random()*Math.PI*2;
@@ -49,6 +63,40 @@ router.get('/api/drivers', function (req, res, next) {
             console.log(body);
             if (body.length > 10){
                 drivers.push(body);
+                body = JSON.parse(body);
+                var lat = body.snappedPoints[0].location.latitude;
+                var lng = body.snappedPoints[0].location.longitude;
+                var regions = [];
+                for (i=0; i<4; i++){
+                    regions.push(Math.floor(Math.random()*3))
+                }
+                regions[Math.floor(Math.random()*4)] = 3;
+                var time_slots = [];
+                var count = 0;
+                var passengers = Math.random() <= 0.5 ? 5: 7;
+                for (var i=0; i<12; i++){
+                    var c = Math.random() <= 0.5 ? 1: 0;
+                    if (c == 1){
+                        count++;
+                    }
+                    if (count > 6){
+                        c = 0;
+                    }
+                    time_slots.push(c);
+                }
+                var data = {
+                    location: {lat:lat, lng:lng},
+                    region: {
+                        r1: regions[0],
+                        r2: regions[1],
+                        r3: regions[2],
+                        r4: regions[3]
+                    },
+                    time_slots: time_slots,
+                    passengers: passengers
+                };
+                drivers_data.push(data);
+
             }
             if (drivers.length == 10){
                 queue.length = 0;
@@ -62,12 +110,10 @@ router.get('/api/drivers', function (req, res, next) {
             console.log(message);
             done();
         });
-    }, function() {
-        console.log(drivers_loc.length);
-        res.send(JSON.stringify(drivers));
-        console.log("done");
+    },function () {
+        callback(drivers_data);
     });
 
-});
+}
 module.exports = router;
 

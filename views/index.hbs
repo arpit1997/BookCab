@@ -201,6 +201,14 @@
                     map: map
                 })
             }
+        });
+        $.get('/api/region', function (data) {
+            var res = JSON.parse(data);
+            console.log(data);
+            var marker = new google.maps.Marker({
+                position: res,
+                map: map
+            })
         })
     }
 </script>
