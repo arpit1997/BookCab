@@ -77,7 +77,7 @@
             <div id="map"></div>
         </div>
         <div style="float: right; border: 1px solid; width: 40%">
-            <form>
+            <form action="javascript:void(0);">
                 <div class="input-group">
                     <span class="input-group-addon" id="basic-addon1">src</span>
                     <input type="text" class="form-control" id="src" placeholder="source" aria-describedby="source">
@@ -87,6 +87,12 @@
                     <input type="text" class="form-control" id="dest" placeholder="destination"
                            aria-describedby=" destination">
                 </div>
+                <div class="input-group">
+                    <span class="input-group-addon" id="basic-addon1">passengers</span>
+                    <input type="text" class="form-control" id="passengers" placeholder="passengers"
+                           aria-describedby="passengers">
+                </div>
+                <input class="btn btn-default book-cab" type="submit" value="Submit">
             </form>
         </div>
     </div>
@@ -189,28 +195,42 @@
             center: myLatlng,
             radius: 20000
         });
-        $.get('/api/drivers', function (data) {
-            var res =  JSON.parse(data);
-            console.log(res.length);
+        $.get('/api/drivers/get', function (data) {
+            var res = JSON.parse(data);
             for(var i=0; i<10;i++){
-                console.log("hello world");
-                var res_o = JSON.parse(res[i]);
-                var coord = {lat: res_o.snappedPoints[0].location.latitude, lng:res_o.snappedPoints[0].location.longitude};
+                var latlng = res[i].location;
+                console.log(latlng);
                 var marker = new google.maps.Marker({
-                    position: coord,
+                    position: latlng,
                     map: map
                 })
             }
         });
-        $.get('/api/region', function (data) {
-            var res = JSON.parse(data);
-            console.log(data);
-            var marker = new google.maps.Marker({
-                position: res,
-                map: map
-            })
-        })
     }
+    $('body').on('click', '.book-cab', function (e) {
+        e.preventDefault();
+        var src_lat = $('#src').attr('data-lat');
+        var src_lng = $('#src').attr('data-lng');
+        var dest_lat = $('#dest').attr('data-lat');
+        var dest_lng = $('#dest').attr('data-lng');
+        var passengers = $('#passengers').value;
+        $.post('/api/book', {
+            src_lat: src_lat,
+            src_lng: src_lng,
+            dest_lat: dest_lat,
+            dest_lng: dest_lng,
+            passengers: passengers
+        }, function (data) {
+            var res = JSON.parse(data);
+            console.log(res);
+        })
+    });
+    $(document).keypress(
+        function(event){
+            if (event.which == '13') {
+                event.preventDefault();
+            }
+        });
 </script>
 <script
         src="https://maps.googleapis.com/maps/api/js?key=AIzaSyASz6Gqa5Oa3WialPx7Z6ebZTj02Liw-Gk&callback=initMap&libraries=places">

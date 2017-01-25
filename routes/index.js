@@ -2,6 +2,7 @@ var express = require('express');
 var http = require('http');
 var async = require('async');
 var request = require('request');
+const fs = require('fs');
 var router = express.Router();
 var API_HOST = "https://roads.googleapis.com/";
 var API_PATH = "v1/nearestRoads?points=";
@@ -11,17 +12,183 @@ router.get('/', function(req, res, next) {
     res.render('index', { title: 'Express' });
 });
 
-router.get('/api/drivers', function (req, res, next) {
+router.get('/api/drivers/generate', function (req, res, next) {
     generate(function (data) {
-        res.send(JSON.stringify(data));
+        fs.writeFile('./data/drivers.json', JSON.stringify(data), function (err) {
+            if (err){
+                console.log(err);
+                res.send("Failed to save file");
+            }
+            console.log("file saved");
+            res.send(JSON.stringify(data));
+        });
     });
 });
+router.get('/api/drivers/get', function (req, res, next) {
+   fs.readFile('./data/drivers.json', function (err, data) {
+       if (err){
+           console.log(err);
+           res.send("failed to get data");
+       }
+       console.log("file opened");
+       var content = JSON.parse(data);
+       res.send(JSON.stringify(content))
+   }) 
+});
 router.get('/api/region', function (req, res, next) {
-    var angle = 2*Math.PI*0.25;
+    var angle = 2*Math.PI*0.75;
     var lat = 20*Math.cos(angle)*0.00904470708 + 23.173244;
     var lng = 20*Math.sin(angle)*0.00959214211 + 72.813143;
     res.send(JSON.stringify({lat:lat, lng:lng}))
 });
+
+router.post('/api/book', function (req, res) {
+    console.log("hello");
+    var src_lat = req.body.src_lat;
+    var src_lng = req.body.src_lng;
+    var dest_lat = req.body.dest_lat;
+    var dest_lng = req.body.dest_lng;
+    var passengers = parseInt(req.body.passengers);
+    var origin = [];
+    origin.push({lat:src_lat, lng:src_lng});
+    console.log("world");
+    var current_time = new Date().getHours();
+    console.log(current_time);
+    var time_slot_index = Math.floor(current_time / 2);
+    var result = [];
+    fs.readFile('./data/drivers.json', function (err, data) {
+        if (err){
+            console.log(err);
+            res.send("failed to get data");
+        }
+        console.log("file opened");
+        var content = JSON.parse(data);
+        for (var i=0; i<10; i++){
+            var time_slot = content[i].time_slots;
+            console.log(time_slot);
+            if (time_slot[time_slot_index] == 1){
+                result.push(content[i]);
+            }
+        }
+        calculateDistance(result, origin, function (data) {
+            console.log(data);
+            console.log(result);
+            console.log("world war");
+            calculateScore(result, passengers, dest_lat, dest_lng, function (data) {
+                console.log(data);
+                res.send(JSON.stringify(result));
+            });
+        });
+
+    });
+});
+
+
+function calculateScore(result, passengers, dest_lat, dest_lng, callback) {
+    result.sort(function (a, b) {
+        return a.distance - b.distance
+    });
+    var d_p = 0;
+    for (var i=0; i<result.length; i++){
+        if (i <= 3){
+            d_p = 3-i
+        }
+        var p = result[i].passengers == passengers ? 1: 0;
+        var count = 0;
+        var result_frame = result[i].region;
+        calculateRegion(dest_lat, dest_lng, function (region) {
+            for (var key in result_frame){
+                if (result_frame.hasOwnProperty(key)){
+                    console.log(region);
+                    if (count == region){
+                        var r = result_frame[key];
+                    }
+                    else {
+                        count++;
+                    }
+                }
+
+            }
+            result[i].score = p+r+(d_p);
+        })
+    }
+    callback(result);
+}
+
+function calculateRegion(lat, lng, callback) {
+    if ((lat >= 23.173244 && lat <= 23.3541381416) && (lng >= 72.813143 && lng <= 73.0049858422)){
+        callback(0)
+    }
+    else{
+        if ((lat >= 22.9923498584 && lat <= 23.173244) && (lng >= 72.813143 && lng <= 73.0049858422)){
+            callback(1)
+        }
+        else{
+            if ((lat >= 22.9923498584 && lat <= 23.173244) && (lng >= 72.6213001578 && lng <= 72.813143)){
+                callback(2)
+            }
+            else{
+                callback(3)
+            }
+        }
+    }
+}
+
+function calculateDistance(result, origin, callback) {
+    var distances = [];
+    function asyncForEach(arr, iterator, callback) {
+        queue = arr.slice(0);
+        // create a recursive iterator
+        function next(err) {
+            if (err) return callback(err);
+
+            // if the queue is empty, call the callback with no error
+            if (queue.length === 0) return callback(null);
+
+            // call the callback with our task
+            // we pass `next` here so the task can let us know when to move on to the next task
+            iterator(queue.shift(), next);
+        }
+
+        // start the loop;
+        next();
+    }
+    function sampleAsync(uri, done) {
+        var driver_lat = uri.location.lat;
+        var driver_lng = uri.location.lng;
+        var orig_lat = origin[0].lat;
+        var orig_lng = origin[0].lng;
+        var URL = "https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&mode=driving&"+
+            "origins="+driver_lat+","+driver_lng+"&destinations="+orig_lat+","+orig_lng+API_KEY;
+        console.log(URL);
+        request(URL, function (err, response, body) {
+            console.log(body);
+            body = JSON.parse(body);
+            if (body.status == "OK"){
+                console.log("status ok");
+                var dist_dur = body.rows[0].elements[0];
+                var distance = dist_dur.distance.value;
+                var duration = dist_dur.duration.value;
+                distances.push({distance:distance, duration:duration});
+                uri.distance = distance;
+                uri.duration=  duration;
+                message = "world";
+                done(message);
+            }
+        });
+
+        }
+    asyncForEach(result, function(uri, done) {
+        sampleAsync(uri, function(message) {
+            console.log(message);
+            done();
+        });
+    },function () {
+        console.log("callback");
+        callback(distances);
+    });
+
+}
 
 
 function generate(callback) {
@@ -68,9 +235,8 @@ function generate(callback) {
                 var lng = body.snappedPoints[0].location.longitude;
                 var regions = [];
                 for (i=0; i<4; i++){
-                    regions.push(Math.floor(Math.random()*3))
+                    regions.push(Math.random() <= 0.5 ? 1: 0);
                 }
-                regions[Math.floor(Math.random()*4)] = 3;
                 var time_slots = [];
                 var count = 0;
                 var passengers = Math.random() <= 0.5 ? 5: 7;
