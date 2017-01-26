@@ -76,7 +76,7 @@ router.post('/api/book', function (req, res) {
             console.log("world war");
             calculateScore(result, passengers, dest_lat, dest_lng, function (data) {
                 console.log(data);
-                res.send(JSON.stringify(result));
+                res.send(JSON.stringify(data[0]));
             });
         });
 
