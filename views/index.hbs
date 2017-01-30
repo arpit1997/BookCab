@@ -12,9 +12,9 @@
 
 </head>
 <style type="text/css">
-    .container {
+    .container{
         width: 100%;
-
+        height: 100vh;
     }
     #map{
         height: 80vh;
@@ -28,7 +28,7 @@
     }
 </style>
 <body>
-<div class="main-container">
+<div class="container">
     <nav class="navbar navbar-default">
         <div class="container-fluid">
             <!-- Brand and toggle get grouped for better mobile display -->
@@ -194,8 +194,7 @@
             center: myLatlng,
             radius: 20000
         });
-        $.get('/api/drivers/get', function (data) {
-            var res = JSON.parse(data);
+        $.get('/api/drivers/get', function (res) {
             for(var i=0; i<10;i++){
                 var latlng = res[i].location;
                 console.log(latlng);
@@ -209,6 +208,7 @@
     }
     $('body').on('click', '.book-cab', function (e) {
         e.preventDefault();
+        $('#cab-book-msg-header').text("Loading");
         var src_lat = $('#src').attr('data-lat');
         var src_lng = $('#src').attr('data-lng');
         var dest_lat = $('#dest').attr('data-lat');
@@ -222,18 +222,24 @@
                 dest_lat: dest_lat,
                 dest_lng: dest_lng,
                 passengers: passengers
-            }, function (data) {
-                var res = JSON.parse(data);
-                console.log(res.location);
-                var message = "driver is " + parseInt(res.distance)/1000 + "km away from source";
-                $('#cab-book-msg-header').text("cab booked");
-                $('#cab-book-msg-message').text(message);
-                var marker = new google.maps.Marker({
-                    position: res.location,
-                    map: map,
-                    icon: 'images/cabs_red.png'
-                });
-                console.log(res);
+            }, function (err, data) {
+                if (null != err){
+                    var res = JSON.parse(data);
+                    console.log(res.location);
+                    var message = "driver is " + parseInt(res.distance)/1000 + "km away from source";
+                    $('#cab-book-msg-header').text("cab booked");
+                    $('#cab-book-msg-message').text(message);
+                    var marker = new google.maps.Marker({
+                        position: res.location,
+                        map: map,
+                        icon: 'images/cabs_red.png'
+                    });
+                    console.log(res);
+                }
+                else {
+                    $('#cab-book-msg-header').text("Failed to book cab");
+                }
+
             })
         }
 

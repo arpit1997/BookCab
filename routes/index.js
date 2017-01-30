@@ -9,7 +9,7 @@ var API_PATH = "v1/nearestRoads?points=";
 var API_KEY = "&key=AIzaSyASz6Gqa5Oa3WialPx7Z6ebZTj02Liw-Gk";
 
 router.get('/', function(req, res, next) {
-    res.render('index', { title: 'Express' });
+    res.render('index');
 });
 
 router.get('/api/drivers/generate', function (req, res, next) {
@@ -20,7 +20,7 @@ router.get('/api/drivers/generate', function (req, res, next) {
                 res.send("Failed to save file");
             }
             console.log("file saved");
-            res.send(JSON.stringify(data));
+            res.json(data);
         });
     });
 });
@@ -32,14 +32,14 @@ router.get('/api/drivers/get', function (req, res, next) {
        }
        console.log("file opened");
        var content = JSON.parse(data);
-       res.send(JSON.stringify(content))
+       res.json(content);
    }) 
 });
 router.get('/api/region', function (req, res, next) {
     var angle = 2*Math.PI*0.75;
     var lat = 20*Math.cos(angle)*0.00904470708 + 23.173244;
     var lng = 20*Math.sin(angle)*0.00959214211 + 72.813143;
-    res.send(JSON.stringify({lat:lat, lng:lng}))
+    res.json({lat:lat, lng:lng});
 });
 
 router.post('/api/book', function (req, res) {
@@ -76,7 +76,7 @@ router.post('/api/book', function (req, res) {
             console.log("world war");
             calculateScore(result, passengers, dest_lat, dest_lng, function (data) {
                 console.log(data);
-                res.send(JSON.stringify(data[0]));
+                res.json(data[0]);
             });
         });
 
