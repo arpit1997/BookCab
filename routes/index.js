@@ -2,11 +2,16 @@ var express = require('express');
 var http = require('http');
 var async = require('async');
 var request = require('request');
+var faker = require('faker');
 const fs = require('fs');
+var mongoose = require('mongoose');
 var router = express.Router();
+var bookings = require('../models/bookings.js');
 var API_HOST = "https://roads.googleapis.com/";
 var API_PATH = "v1/nearestRoads?points=";
 var API_KEY = "&key=AIzaSyASz6Gqa5Oa3WialPx7Z6ebZTj02Liw-Gk";
+var uri = 'mongodb://arpit:9829667088@ds159497.mlab.com:59497/todo';
+
 
 router.get('/', function(req, res, next) {
     res.render('index');
@@ -48,9 +53,13 @@ router.post('/api/book', function (req, res) {
     var src_lng = req.body.src_lng;
     var dest_lat = req.body.dest_lat;
     var dest_lng = req.body.dest_lng;
+    var pass_name = req.body.pass_name;
+    var pass_phone = req.body.pass_phone;
     var passengers = parseInt(req.body.passengers);
     var origin = [];
     origin.push({lat:src_lat, lng:src_lng});
+    var destination = [];
+    destination.push({lat:dest_lat, lng: dest_lng});
     console.log("world");
     var current_time = new Date().getHours();
     console.log(current_time);
@@ -75,13 +84,46 @@ router.post('/api/book', function (req, res) {
             console.log(result);
             console.log("world war");
             calculateScore(result, passengers, dest_lat, dest_lng, function (data) {
-                console.log(data);
-                res.json(data[0]);
+                if (data.length != 0){
+                    console.log(data);
+                    databaseEntry(origin, destination, data[0], pass_name, pass_phone, function () {
+                        console.log(data[0]);
+                        res.json(data[0]);
+                    });
+                }
+                
             });
         });
 
     });
 });
+
+function databaseEntry(origin, destination, data, name, phone, callback) {
+    var booking = new bookings({
+        passengername: name,
+        passengerphonenumber: phone,
+        drivername: data.drivername,
+        driverphonenumber: data.driverphonenumber,
+        passengers: data.passengers,
+        driverDistance: data.distance,
+        src: {
+            lat: origin[0].lat,
+            lng: origin[0].lng
+        },
+        dst: {
+            lat: destination[0].lat,
+            lng: destination[0].lng
+        }
+    });
+    mongoose.connect(uri);
+    var db = mongoose.connection;
+    db.once('open', function () {
+        console.log("connected");
+        booking.save();
+        mongoose.disconnect();
+        callback();
+    });
+}
 
 
 function calculateScore(result, passengers, dest_lat, dest_lng, callback) {
@@ -259,7 +301,9 @@ function generate(callback) {
                         r4: regions[3]
                     },
                     time_slots: time_slots,
-                    passengers: passengers
+                    passengers: passengers,
+                    drivername: faker.name.findName(),
+                    driverphonenumber: faker.phone.phoneNumber()
                 };
                 drivers_data.push(data);
 

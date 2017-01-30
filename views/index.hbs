@@ -77,6 +77,18 @@
                         </div>
                     </div>
                     <div class="form-group">
+                        <label for="dest" class="col-sm-2 control-label">Name</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="pass_name" placeholder="name">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="pass_phone" class="col-sm-2 control-label">Phone number</label>
+                        <div class="col-sm-10">
+                            <input type="tel" class="form-control" id="pass_phone" placeholder="phone number">
+                        </div>
+                    </div>
+                    <div class="form-group">
                         <div class="col-sm-offset-2 col-sm-10">
                             <button type="submit" class="btn btn-default book-cab">Book</button>
                         </div>
@@ -214,19 +226,23 @@
         var dest_lat = $('#dest').attr('data-lat');
         var dest_lng = $('#dest').attr('data-lng');
         var passengers = $('#passengers').val();
+        var pass_name = $('#pass_name').val();
+        var pass_phone = $('#pass_phone').val();
         console.log(src_lat, src_lng, dest_lat, dest_lng, passengers);
-        if (src_lat != null && src_lng != null && dest_lng != null && dest_lat != null && passengers != null){
+        if (src_lat != null && src_lng != null && dest_lng != null && dest_lat != null && passengers != null && pass_name != null){
             $.post('/api/book', {
                 src_lat: src_lat,
                 src_lng: src_lng,
                 dest_lat: dest_lat,
                 dest_lng: dest_lng,
-                passengers: passengers
-            }, function (err, data) {
-                if (null != err){
-                    var res = JSON.parse(data);
-                    console.log(res.location);
-                    var message = "driver is " + parseInt(res.distance)/1000 + "km away from source";
+                passengers: passengers,
+                pass_name: pass_name,
+                pass_phone: pass_phone
+            }, function (res, err) {
+                if (err == "success"){
+                    console.log(err);
+                    var message = "driver is " + parseInt(res.distance)/1000 + "km away from source "+
+                            "driver name is " + res.drivername + "phone number is " + res.driverphonenumber;
                     $('#cab-book-msg-header').text("cab booked");
                     $('#cab-book-msg-message').text(message);
                     var marker = new google.maps.Marker({
@@ -234,11 +250,11 @@
                         map: map,
                         icon: 'images/cabs_red.png'
                     });
-                    console.log(res);
                 }
                 else {
                     $('#cab-book-msg-header').text("Failed to book cab");
                 }
+
 
             })
         }
