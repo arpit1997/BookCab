@@ -242,7 +242,7 @@
                 if (err == "success"){
                     console.log(err);
                     var message = "driver is " + parseInt(res.distance)/1000 + "km away from source "+
-                            "driver name is " + res.drivername + "phone number is " + res.driverphonenumber;
+                            "driver name is " + res.drivername + ", phone number is " + res.driverphonenumber;
                     $('#cab-book-msg-header').text("cab booked");
                     $('#cab-book-msg-message').text(message);
                     var marker = new google.maps.Marker({
