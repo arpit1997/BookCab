@@ -5,5 +5,5 @@ BookCab is a simple webapp which books cab nearest to you.
 
 ![alt text](https://raw.githubusercontent.com/arpit1997/BookCab/master/data/sc.png "Logo Title Text 1")
 
-##License
+## License
 This web app is licensed under [MIT License](https://github.com/arpit1997/BookCab/blob/master/LICENSE)
