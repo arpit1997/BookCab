@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "test": "./node_modules/mocha/bin/mocha test/test-server.js"
   },
   "dependencies": {
     "@google/maps": "^0.3.1",
@@ -16,6 +17,7 @@
     "express": "~4.14.0",
     "faker": "^3.1.0",
     "hbs": "~4.0.1",
+    "mocha": "^3.5.3",
     "mongoose": "^4.8.0",
     "mongoose-double": "0.0.1",
     "morgan": "~1.7.0",
