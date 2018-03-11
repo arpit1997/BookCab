@@ -6,5 +6,19 @@ BookCab is a simple webapp which books cab nearest to you.
 
 ![alt text](https://raw.githubusercontent.com/arpit1997/BookCab/master/data/sc.png "Logo Title Text 1")
 
+## How to run
+
+ - Install node and other dependencies
+ ```
+$ nvm install v8.9.3
+$ npm install
+$ npm run start
+```
+ - Running tests
+```
+$ npm install --dev
+$ npm run test
+```
+
 ## License
 This web app is licensed under [MIT License](https://github.com/arpit1997/BookCab/blob/master/LICENSE)
